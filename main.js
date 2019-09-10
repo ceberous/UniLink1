@@ -1,15 +1,13 @@
 const path = require( "path" );
 const process = require( "process" );
 const admin = require( "firebase-admin" );
-const PersonalFilePath = path.join( process.env.HOME , ".config" , "personal" , "unilink1.js" );
-const Personal = require( PersonalFilePath );
 
 class UniLink1 {
 
 	constructor( options ) {
 		options = options || {
 			firebase_credentials_path: path.join(  process.cwd() , "firebase-credentials.json" ) ,
-			personal: Personal ,
+			personal: require( path.join( process.env.HOME , ".config" , "personal" , "unilink1.js" ) ) ,
 		};
 		this.firebase_credentials_path = options.firebase_credentials_path;
 		this.personal = options.personal;
@@ -70,7 +68,7 @@ class UniLink1 {
 		if ( milliseconds < 10 ) { padding += "0"; }
 		milliseconds = padding + milliseconds.toString();
 		const date_string = `${ day }${ month_abreviation }${ year }`;
-		const time_string = `${ hours }:${ minutes }:${ seconds }.${ milliseconds }`;
+		const time_string = `${ hours }:${ minutes }:${ seconds }`;
 		return `${ date_string } @@ ${ time_string } ${ time_zone_abreviation }`;
 	}
 
