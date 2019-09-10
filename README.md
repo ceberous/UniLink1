@@ -8,7 +8,13 @@
 	const path = require( "path" );
 	const Unilink1 = require( "unilink1" );
 
-	const link = new Unilink1();
+	const link = new Unilink1({
+		firebase_credentials_path: path.join(  process.cwd() , "firebase-credentials.json" ) ,
+		personal: {
+			database_url: "https://$XXXX.firebaseio.com" ,
+			storage_bucket_url: "$XXXXX.appspot.com" ,
+		}
+	});
 	await link.connect();
 
 	link.observeReference( "process-1/client-1/channel-1" );
@@ -30,7 +36,13 @@
 	const process = require( "process" );
 	const Unilink1 = require( "unilink1" );
 
-	const link = new Unilink1();
+	const link = new Unilink1({
+		firebase_credentials_path: path.join(  process.cwd() , "firebase-credentials.json" ) ,
+		personal: {
+			database_url: "https://$XXXX.firebaseio.com" ,
+			storage_bucket_url: "$XXXXX.appspot.com" ,
+		}
+	});
 	await link.connect();
 
 	await link.updateChildReference( "process-1/client-2/channel-2" , "status" , {
