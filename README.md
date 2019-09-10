@@ -9,6 +9,7 @@
   const Unilink1 = require( "unilink1" );
     const link = new Unilink1();
     await link.connect();
+
     link.observeReference( "process-1/client-1/channel-1" );
     link.observeReference( "process-1/client-2/channel-2" , ( snapshot )=> {
         console.log( "inside custom" );
@@ -34,6 +35,9 @@
         time_string: link.time_string() ,
         message: "latest status message on channel 2"
     });
+
+    await link.download( "process-1/PikaO2x.png" , path.join( __dirname , "COPY-PikaO2x.png" ) );
+
     process.exit( 1 );
 
 })();
