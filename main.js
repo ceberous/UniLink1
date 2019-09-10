@@ -6,24 +6,32 @@ const Personal = require( PersonalFilePath );
 
 class UniLink1 {
 
-	constructor(
-		firebase_credentials_path = path.join(  process.cwd() , "firebase-credentials.json" ) ,
-		database_url = Personal.database_url ,
-		personal = Personal || {}
-		){
-		this.credentials = require( firebase_credentials_path );
-		this.database_url = database_url;
-		this.personal = personal;
+	constructor( options ) {
+		options = options || {
+			firebase_credentials_path: path.join(  process.cwd() , "firebase-credentials.json" ) ,
+			personal: Personal ,
+		};
+		this.firebase_credentials_path = options.firebase_credentials_path;
+		this.personal = options.personal;
+		this.firebase_credentials = require( this.firebase_credentials_path );
 		this.observers = [];
 	}
 
 	login() {
 		return new Promise( async function( resolve , reject ) {
 			try {
-				await admin.initializeApp({
-					credential: admin.credential.cert( this.credentials ),
-					databaseURL: this.database_url
-				});
+				//console.log( this.personal );
+				let options = {
+					credential: admin.credential.cert( this.firebase_credentials ),
+				};
+				if ( this.personal.database_url ) {
+					options.databaseURL = this.personal.database_url;
+				}
+				if ( this.personal.storage_bucket_url ) {
+					options.storageBucket = this.personal.storage_bucket_url;
+				}
+				console.log( options );
+				await admin.initializeApp( options );
 				resolve();
 				return;
 			}
@@ -35,12 +43,35 @@ class UniLink1 {
 		return new Promise( async function( resolve , reject ) {
 			try {
 				await this.login();
-				this.db = await admin.database();
+				if ( this.personal.database_url ) {
+					this.db = await admin.database();
+				}
 				resolve();
 				return;
 			}
 			catch( error ) { console.log( error ); reject( error ); return; }
 		}.bind( this ) );
+	}
+
+	time_string( time_zone = Intl.DateTimeFormat().resolvedOptions().timeZone ) {
+		const now = new Date( new Date().toLocaleString( "en-US" , { timeZone: time_zone } ) );
+		const time_zone_abreviation = now.toLocaleTimeString( "en-US" , { timeZone: time_zone , timeZoneName: "short" } ).split( " " )[ 2 ];
+		const month_abreviations = [ 'Jan' , 'Feb' , 'Mar' , 'Apr' , 'May' , 'Jun' , 'Jul' , 'Aug' , 'Sep' , 'Oct' , 'Nov' , 'Dec' ];
+		const day = ( "0" + now.getDate() ).slice( -2 );
+		const month = ( "0" +( now.getMonth() +1 ) ).slice( -2 );
+		const month_abreviation = month_abreviations[ now.getMonth() ].toUpperCase();
+		const year = now.getFullYear();
+		const hours = ( "0" + now.getHours() ).slice( -2 );
+		const minutes = ( "0" + now.getMinutes() ).slice( -2 );
+		const seconds = ( "0" + now.getSeconds() ).slice( -2 );
+		let milliseconds = now.getMilliseconds();
+		let padding = "";
+		if ( milliseconds < 100 ) { padding += "0"; }
+		if ( milliseconds < 10 ) { padding += "0"; }
+		milliseconds = padding + milliseconds.toString();
+		const date_string = `${ day }${ month_abreviation }${ year }`;
+		const time_string = `${ hours }:${ minutes }:${ seconds }.${ milliseconds }`;
+		return `${ date_string } @@ ${ time_string } ${ time_zone_abreviation }`;
 	}
 
 	addChildToReference( reference , child , object ) {
@@ -89,6 +120,39 @@ class UniLink1 {
 			observer: observer
 		});
 		console.log( "Observing Reference: " + reference );
+	}
+
+	upload( source_file_path , save_name , bucket_name ) {
+		return new Promise( async function( resolve , reject ) {
+			try {
+				if ( !!!this.personal.storage_bucket_url ) { resolve( false ); return; }
+				let bucket;
+				if ( bucket_name ) { bucket = await admin.storage().bucket( bucket_name ); }
+				else { bucket = await admin.storage().bucket(); }
+				const result = await bucket.upload( source_file_path , {
+					destination: save_name ,
+				});
+				resolve( result );
+				return;
+			}
+			catch( error ) { console.log( error ); reject( error ); return; }
+		}.bind( this ) );
+	}
+
+	download( file_name , save_path , bucket_name ) {
+		return new Promise( async function( resolve , reject ) {
+			try {
+				let bucket;
+				if ( bucket_name ) { bucket = await admin.storage().bucket( bucket_name ); }
+				else { bucket = await admin.storage().bucket(); }
+				const result = await bucket.file( file_name ).download({
+					destination: save_path
+				});
+				resolve( result );
+				return;
+			}
+			catch( error ) { console.log( error ); reject( error ); return; }
+		}.bind( this ) );
 	}
 
 };
