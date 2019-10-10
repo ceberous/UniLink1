@@ -7,20 +7,32 @@ process.env.GOOGLE_APPLICATION_CREDENTIALS = "./firebase-credentials.json"
 
 // Import Child Classes
 const Utils = require( "./Utils.js" );
-const Database = require( "./Database.js" );
-const Firestore = require( "./Firestore.js" );
-const Bucket = require( "./Bucket.js" );
+const Database = require( "./FirebaseWrappers/Database.js" );
+const Firestore = require( "./FirebaseWrappers/Firestore.js" );
+const Bucket = require( "./FirebaseWrappers/Bucket.js" );
+//const Messenger = require( "./FirebaseWrappers/Bucket.js" );
 
 class UniLink1 {
 
 	constructor( options ) {
+
+		// Backup / Default Options
 		options = options || {
 			firebase_credentials_path: path.join(  process.cwd() , "firebase-credentials.json" ) ,
 			personal: require( path.join( process.env.HOME , ".config" , "personal" , "unilink1.js" ) ) ,
 		};
-		this.firebase_credentials_path = options.firebase_credentials_path;
+
+		// Import Passed or Default Options to 'Formal' Config Format
+		// Basically, Either Supply options.firebase_credentials_path or already 'required' options.firebase_credentials
 		this.personal = options.personal;
-		this.firebase_credentials = require( this.firebase_credentials_path );
+		if ( !!!options.firebase_credentials ) {
+			this.firebase_credentials = require( options.firebase_credentials_path );
+		}
+		else {
+			this.firebase_credentials = options.firebase_credentials;
+		}
+
+		// Build 'Static' Subclasses
 		this.utils = new Utils();
 	}
 
